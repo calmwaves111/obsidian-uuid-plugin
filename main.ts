@@ -55,13 +55,13 @@ export default class uuidPlugin extends Plugin {
 
 		this.addCommand({
 			id: "add-ids-to-all-notes",
-			name: "Add an ID to all notes",
+			name: "Add an UUID to all notes",
 			callback: addIDsToAllNotes(this.app),
 		});
 
 		this.addCommand({
 			id: "add-ids-to-current-note",
-			name: "Add an ID to current note",
+			name: "Add an UUID to current note",
 			callback: addIDsToCurrentNotes(this.app),
 		});
 	}
