@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile } from "obsidian";
+import { App, Notice, Plugin, PluginSettingTab, Setting, TFile } from "obsidian";
 import { ulid } from "ulid";
 interface uuidPluginSettings {
 	uuidKey: string;
@@ -20,6 +20,9 @@ function addID(app: App): (f: TFile) => Promise<void> {
 				data[key] = ulid();
 			});
 		}
+		else {
+			new Notice(`${f.name} 中uuid已经存在`, 1000);
+		}
 	};
 }
 
@@ -35,6 +38,10 @@ function addIDsToCurrentNotes(app: App) {
 	return function () {
 		const currentFile = app.workspace.getActiveFile();
 		if (!currentFile) {
+			return;
+		}
+		if(currentFile.extension!="md"){
+			new Notice("当前文件不是md笔记",1000);
 			return;
 		}
 		_addID(currentFile);

@@ -12,7 +12,8 @@
 - [x] 去掉在笔记修改时自动添加uuid的功能
 - [x] 增加设置界面，配置uuid的key值
 - [x] 增加命令 Add an ID to current note，强制给当前文件添加uuid，不考虑是否在黑名单内
-- [ ] Add an ID to current note只针对md笔记，排除掉当前打开的是其他格式文件
+- [x] Add an ID to current note只针对md笔记，排除掉当前打开的是其他格式文件
+- [x] 通知提醒已经存在uuid的笔记
 - [ ] 增加命令 Add an Id to whitelist，按文件路径添加
 - [ ] 增加命令 Add an Id besides blacklist，按文件路径忽略
 - [ ] 白名单和黑名单支持正则表达式
