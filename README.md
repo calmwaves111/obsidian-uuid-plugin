@@ -21,7 +21,7 @@
 - [ ] 白名单和黑名单按其他条件筛选，如标签等
 - [x] 切换uuid生成算法：按创建时间戳生成
 - [ ] 增加文件修改log日志
-
+- [x] 改用[short-unique-id](https://www.npmjs.com/package/short-unique-id)生成算法，可自定义uuid的长度，默认为10
 ## How to use
 
 打开命令面板，搜索uuid，运行所需命令

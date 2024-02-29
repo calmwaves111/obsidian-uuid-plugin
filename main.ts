@@ -6,10 +6,12 @@ import {
     Setting,
     TFile,
 } from "obsidian";
-import { ulid } from "ulid";
+import ShortUniqueId from "short-unique-id";
 
+const DeFaULT_UUID_LENGTH = 10;
 interface uuidPluginSettings {
     uuidKey: string;
+    uuidLength: number;
     blacklist: string[];
     whitelist: string[];
     uuidStyle: number;
@@ -17,6 +19,7 @@ interface uuidPluginSettings {
 
 const DEFAULT_SETTINGS: uuidPluginSettings = {
     uuidKey: "uuid",
+    uuidLength: 10,
     blacklist: [],
     whitelist: [],
     uuidStyle: 1,
@@ -32,7 +35,9 @@ function addID(app: App): (f: TFile) => Promise<void> {
         if (!app.metadataCache.getFileCache(f)?.frontmatter?.[key]) {
             var uuid = "";
             if (getSettings(app).uuidStyle === 1) {
-                uuid = ulid();
+                const uidlen = getSettings(app).uuidLength;
+                const uid = new ShortUniqueId({ length: uidlen });
+                uuid = uid.rnd();
             } else {
                 const ctime = new Date(f.stat.ctime); // 将时间戳数字转换为 Date 对象
                 const formattedTime = formatDate(ctime); // 格式化时间 yyyyMMdd_hhmmss
@@ -173,6 +178,25 @@ class uuidSettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         this.plugin.settings.uuidKey = value;
                         await this.plugin.saveSettings();
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName("uuid-Length")
+            .setDesc("uuid的长度")
+            .addText((text) =>
+                text
+                    // .setPlaceholder(this.plugin.settings.uuidLength.toString()) // 将上一次设定的长度数字转换为字符串作为占位符
+                    .setPlaceholder(DeFaULT_UUID_LENGTH.toString()) // 将数字转换为字符串作为占位符
+                    .setValue(this.plugin.settings.uuidLength.toString())
+                    .onChange(async (value) => {
+                        const intValue = parseInt(value);
+                        if (!isNaN(intValue)) {
+                            this.plugin.settings.uuidLength = intValue;
+                            await this.plugin.saveSettings();
+                        } else {
+                            new Notice("请输入有效的数字作为 uuid 长度");
+                        }
                     })
             );
 
