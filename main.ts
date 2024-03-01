@@ -5,6 +5,7 @@ import {
     PluginSettingTab,
     Setting,
     TFile,
+    moment,
 } from "obsidian";
 import ShortUniqueId from "short-unique-id";
 
@@ -15,6 +16,7 @@ interface uuidPluginSettings {
     blacklist: string[];
     whitelist: string[];
     uuidStyle: number;
+    dateFormat: string;
 }
 
 const DEFAULT_SETTINGS: uuidPluginSettings = {
@@ -23,12 +25,14 @@ const DEFAULT_SETTINGS: uuidPluginSettings = {
     blacklist: [],
     whitelist: [],
     uuidStyle: 1,
+    dateFormat: "YYYYMMDD_hhmmss",
 };
 
 let expSettings: uuidPluginSettings;
 function getSettings(app: App) {
     return expSettings;
 }
+
 function addID(app: App): (f: TFile) => Promise<void> {
     return async function (f: TFile): Promise<void> {
         const key = getSettings(app).uuidKey;
@@ -39,8 +43,10 @@ function addID(app: App): (f: TFile) => Promise<void> {
                 const uid = new ShortUniqueId({ length: uidlen });
                 uuid = uid.rnd();
             } else {
-                const ctime = new Date(f.stat.ctime); // 将时间戳数字转换为 Date 对象
-                const formattedTime = formatDate(ctime); // 格式化时间 yyyyMMdd_hhmmss
+                const ctime = new Date(f.stat.ctime); // 将时间戳转换为 Date 对象，f.stat.ctime是个number
+                const formattedTime = moment(ctime).format(
+                    getSettings(app).dateFormat
+                ); // 使用 Moment.js 格式化时间戳
                 uuid = formattedTime;
             }
             await app.fileManager.processFrontMatter(f, (data) => {
@@ -51,19 +57,6 @@ function addID(app: App): (f: TFile) => Promise<void> {
         }
     };
 }
-
-//时间戳格式化，应该可以引第三方库date-fns，先暂时自己写函数吧
-function formatDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
-
-    return `${year}${month}${day}_${hours}${minutes}${seconds}`;
-}
-
 function addIDsToAllNotesBesidesBlacklist(app: App) {
     const _addID = addID(this.app);
     return function () {
@@ -212,8 +205,9 @@ class uuidSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     })
             );
+
         new Setting(containerEl)
-            .setName("whitelisy")
+            .setName("whitelist")
             .setDesc("白名单，includes()逻辑，每行一个文件路径，换行分隔")
             .addTextArea((text) =>
                 text
@@ -230,12 +224,47 @@ class uuidSettingTab extends PluginSettingTab {
             .setDesc(`uuid生成算法`)
             .addDropdown((dd) => {
                 dd.addOption("1", "ulid随机字符串");
-                dd.addOption("2", "时间戳yyyyMMdd_hhmmss");
+                dd.addOption("2", "创建时间戳");
                 dd.setValue(this.plugin.settings.uuidStyle.toString());
                 dd.onChange(async (value) => {
                     this.plugin.settings.uuidStyle = parseInt(value);
                     await this.plugin.saveSettings();
                 });
             });
+
+        const dateFormatSettingDescription = new DocumentFragment();
+        dateFormatSettingDescription.createEl("span", {
+            text: "请在uuidStyle中选择“创建时间戳”，格式参考 ",
+        });
+        dateFormatSettingDescription.appendChild(
+            createEl("a", {
+                text: "moment.js",
+                href: "https://momentjs.com/docs/#/displaying/format/",
+            })
+        );
+        dateFormatSettingDescription.createEl("br"); // 添加换行
+        dateFormatSettingDescription.appendText("当前所用格式的样例: ");
+
+        // 创建一个 span 元素用于显示当前时间戳格式的样例
+        const currentFormatExampleSpan = createEl("span", {
+            text: moment().format(this.plugin.settings.dateFormat),
+        });
+        dateFormatSettingDescription.appendChild(currentFormatExampleSpan);
+
+        new Setting(this.containerEl)
+            .setName("时间戳格式")
+            .setDesc(dateFormatSettingDescription)
+            .addText((text) =>
+                text
+                    .setPlaceholder("Enter the format string")
+                    .setValue(this.plugin.settings.dateFormat)
+                    .onChange(async (value) => {
+                        this.plugin.settings.dateFormat = value;
+                        await this.plugin.saveSettings();
+                        // 更新当前时间戳格式的样例
+                        currentFormatExampleSpan.innerText =
+                            moment().format(value);
+                    })
+            );
     }
 }

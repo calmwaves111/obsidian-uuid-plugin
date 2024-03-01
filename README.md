@@ -8,7 +8,12 @@
 2. Add an UUID to current note：强制给当前文件添加uuid，不考虑是否在黑名单内。
 3. Add an UUID to whitelist note：只给白名单里的文件添加uuid
 
-在设置界面可以配置uuid的key值。
+设置项可配置：
+1. uuid的key值
+2. uuid的长度
+3. uuid的黑名单和白名单
+3. uuid的生成算法
+4. 如果uuidStyle为创建时间戳，可自定义时间戳的格式，格式参考 [moment.js](https://momentjs.com/docs/#/displaying/format/)
 
 - [x] 去掉在笔记修改时自动添加uuid的功能
 - [x] 增加设置界面，配置uuid的key值
@@ -22,6 +27,7 @@
 - [x] 切换uuid生成算法：按创建时间戳生成
 - [ ] 增加文件修改log日志
 - [x] 改用[short-unique-id](https://www.npmjs.com/package/short-unique-id)生成算法，可自定义uuid的长度，默认为10
+- [x] 创建时间戳支持自定义格式，格式参考 [moment.js](https://momentjs.com/docs/#/displaying/format/)
 ## How to use
 
 打开命令面板，搜索uuid，运行所需命令
