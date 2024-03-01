@@ -12,7 +12,7 @@
 1. uuid的key值
 2. uuid的长度
 3. uuid的黑名单和白名单
-3. uuid的生成算法
+3. uuid的生成算法，可选随机数生成算法和创建时间戳
 4. 如果uuidStyle为创建时间戳，可自定义时间戳的格式，格式参考 [moment.js](https://momentjs.com/docs/#/displaying/format/)
 
 - [x] 去掉在笔记修改时自动添加uuid的功能
