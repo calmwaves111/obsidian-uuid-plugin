@@ -11,8 +11,9 @@ import ShortUniqueId from "short-unique-id";
 interface uuidPluginSettings {
     uuidKey: string;
     uuidLength: number;
-    blacklist: string[];
-    whitelist: string[];
+    pathBlacklist: string[];
+    pathWhitelist: string[];
+    propertywhitelist: string[];
     uuidStyle: number;
     dateFormat: string;
 }
@@ -20,8 +21,9 @@ interface uuidPluginSettings {
 const DEFAULT_SETTINGS: uuidPluginSettings = {
     uuidKey: "uuid",
     uuidLength: 10,
-    blacklist: [],
-    whitelist: [],
+    pathBlacklist: [],
+    pathWhitelist: [],
+    propertywhitelist: [],
     uuidStyle: 1,
     dateFormat: "YYYYMMDD_hhmmss",
 };
@@ -58,7 +60,7 @@ function addID(app: App): (f: TFile) => Promise<void> {
 function addIDsToAllNotesBesidesBlacklist(app: App) {
     const _addID = addID(this.app);
     return function () {
-        const blacklist = getSettings(this.app).blacklist;
+        const blacklist = getSettings(this.app).pathBlacklist;
 
         if (blacklist.length === 0) {
             app.vault.getMarkdownFiles().forEach((f) => _addID(f));
@@ -75,24 +77,69 @@ function addIDsToAllNotesBesidesBlacklist(app: App) {
     };
 }
 
+// function addIDsToWhitelist(app: App) {
+//     const _addID = addID(this.app);
+//     return function () {
+//         const PathWhitelist = getSettings(this.app).pathWhitelist;
+//         const propertywhitelist=getSettings(this.app).propertywhitelist;
+
+//         if (PathWhitelist.length === 0 || propertywhitelist.length === 0) {
+//             return; // 如果whitelist为空，不需要给任何文件添加uuid
+//         } else {
+//             const targetfiles = app.vault
+//                 .getMarkdownFiles()
+//                 .filter((t) =>
+//                     PathWhitelist.some((folder) => t.path.includes(folder))
+//                 )
+//             new Notice(`正在给${targetfiles.length}个笔记添加uuid，但是`, 0);
+//             targetfiles.forEach((f) => _addID(f));
+//         }
+//     };
+// }
+
 function addIDsToWhitelist(app: App) {
     const _addID = addID(this.app);
     return function () {
-        const whitelist = getSettings(this.app).whitelist;
+        const PathWhitelist = getSettings(this.app).pathWhitelist;
+        const propertywhitelist = getSettings(this.app).propertywhitelist;
 
-        if (whitelist.length === 0) {
-            return; // 如果whitelist为空，不需要给任何文件添加uuid
+        if (PathWhitelist.length === 0) {
+            return; // 如果 whitelist 为空，不需要给任何文件添加 uuid
         } else {
-            const targetfiles = app.vault
+            let targetfiles = app.vault
                 .getMarkdownFiles()
                 .filter((t) =>
-                    whitelist.some((folder) => t.path.includes(folder))
+                    PathWhitelist.some((folder) => t.path.includes(folder))
                 );
-            new Notice(`正在给${targetfiles.length}个笔记添加uuid，但是`, 0);
+
+            // 如果存在 propertywhitelist，则根据 propertywhitelist 进行筛选
+            if (propertywhitelist && propertywhitelist.length > 0) {
+                targetfiles = targetfiles.filter((f) => {
+                    const fileCache = app.metadataCache.getFileCache(f);
+                    if (!fileCache) {
+                        return false; // 如果 fileCache 为 null，直接返回 false
+                    }
+
+                    const fileProperties = fileCache.frontmatter;
+                    if (typeof fileProperties === "undefined") {
+                        return false; // 如果 fileProperties 为 undefined，直接返回 false
+                    }
+
+                    return propertywhitelist.some((prop) => typeof fileProperties[prop] !== "undefined");
+                    // return propertywhitelist.some((prop) => fileProperties[prop]);//dg-pulish为true时才视为 targetfiles
+                });
+            }
+
+            if (targetfiles.length === 0) {
+                return; // 如果没有 targetfiles，直接返回
+            }
+
+            new Notice(`正在给 ${targetfiles.length} 个笔记添加 uuid，但是`, 2000);
             targetfiles.forEach((f) => _addID(f));
         }
     };
 }
+
 
 function addIDsToCurrentNotes(app: App) {
     const _addID = addID(this.app);
@@ -199,27 +246,39 @@ class uuidSettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("blacklist")
-            .setDesc("黑名单，includes()逻辑，每行一个文件路径，换行分隔")
+            .setName("pathBlacklist")
+            .setDesc("路径黑名单，includes()逻辑，每行一个文件路径，换行分隔")
             .addTextArea((text) =>
                 text
-                    .setPlaceholder("黑名单")
-                    .setValue(this.plugin.settings.blacklist.join("\n"))
+                    .setPlaceholder("路径黑名单")
+                    .setValue(this.plugin.settings.pathBlacklist.join("\n"))
                     .onChange(async (value) => {
-                        this.plugin.settings.blacklist = value.split("\n");
+                        this.plugin.settings.pathBlacklist = value.split("\n");
                         await this.plugin.saveSettings();
                     })
             );
 
         new Setting(containerEl)
-            .setName("whitelist")
-            .setDesc("白名单，includes()逻辑，每行一个文件路径，换行分隔")
+            .setName("pathWhitelist")
+            .setDesc("路径白名单，includes()逻辑，每行一个文件路径，换行分隔")
             .addTextArea((text) =>
                 text
-                    .setPlaceholder("白名单")
-                    .setValue(this.plugin.settings.whitelist.join("\n"))
+                    .setPlaceholder("路径白名单")
+                    .setValue(this.plugin.settings.pathWhitelist.join("\n"))
                     .onChange(async (value) => {
-                        this.plugin.settings.whitelist = value.split("\n");
+                        this.plugin.settings.pathWhitelist = value.split("\n");
+                        await this.plugin.saveSettings();
+                    })
+            );
+            new Setting(containerEl)
+            .setName("propertyWhitelist")
+            .setDesc("属性白名单，includes()逻辑，每行一个文件路径，换行分隔")
+            .addTextArea((text) =>
+                text
+                    .setPlaceholder("属性白名单")
+                    .setValue(this.plugin.settings.propertywhitelist.join("\n"))
+                    .onChange(async (value) => {
+                        this.plugin.settings.propertywhitelist = value.split("\n");
                         await this.plugin.saveSettings();
                     })
             );

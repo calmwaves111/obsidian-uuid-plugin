@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-uuid-plugin",
 	"name": "uuid",
-	"version": "0.0.9",
+	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
 	"description": "Generate uuid for notes in obsidian",
 	"author": "calmwaves",
