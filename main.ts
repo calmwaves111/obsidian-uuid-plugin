@@ -8,8 +8,6 @@ import {
     moment,
 } from "obsidian";
 import ShortUniqueId from "short-unique-id";
-
-const DeFaULT_UUID_LENGTH = 10;
 interface uuidPluginSettings {
     uuidKey: string;
     uuidLength: number;
@@ -163,24 +161,29 @@ class uuidSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("uuid-key")
-            .setDesc("key:value")
+            .setDesc("uuid的key值，默认为uuid")
             .addText((text) =>
                 text
-                    .setPlaceholder("Enter your uuid key")
+                    .setPlaceholder(DEFAULT_SETTINGS.uuidKey)
                     .setValue(this.plugin.settings.uuidKey)
                     .onChange(async (value) => {
-                        this.plugin.settings.uuidKey = value;
+                        if (value.trim() === "") {
+                            this.plugin.settings.uuidKey =
+                                DEFAULT_SETTINGS.uuidKey;
+                        } else {
+                            this.plugin.settings.uuidKey = value;
+                        }
                         await this.plugin.saveSettings();
                     })
             );
 
         new Setting(containerEl)
             .setName("uuid-Length")
-            .setDesc("uuid的长度")
+            .setDesc("uuid的长度，默认为10")
             .addText((text) =>
                 text
                     // .setPlaceholder(this.plugin.settings.uuidLength.toString()) // 将上一次设定的长度数字转换为字符串作为占位符
-                    .setPlaceholder(DeFaULT_UUID_LENGTH.toString()) // 将数字转换为字符串作为占位符
+                    .setPlaceholder(DEFAULT_SETTINGS.uuidLength.toString()) // 将数字转换为字符串作为占位符
                     .setValue(this.plugin.settings.uuidLength.toString())
                     .onChange(async (value) => {
                         const intValue = parseInt(value);
@@ -188,7 +191,9 @@ class uuidSettingTab extends PluginSettingTab {
                             this.plugin.settings.uuidLength = intValue;
                             await this.plugin.saveSettings();
                         } else {
-                            new Notice("请输入有效的数字作为 uuid 长度");
+                            this.plugin.settings.uuidLength =
+                                DEFAULT_SETTINGS.uuidLength;
+                            // new Notice("请输入有效的数字作为 uuid 长度");
                         }
                     })
             );
@@ -256,14 +261,19 @@ class uuidSettingTab extends PluginSettingTab {
             .setDesc(dateFormatSettingDescription)
             .addText((text) =>
                 text
-                    .setPlaceholder("Enter the format string")
+                    .setPlaceholder("YYYYMMDD_HHmmss")
                     .setValue(this.plugin.settings.dateFormat)
                     .onChange(async (value) => {
-                        this.plugin.settings.dateFormat = value;
+                        if (value.trim() === "") {
+                            this.plugin.settings.dateFormat =
+                                DEFAULT_SETTINGS.dateFormat;
+                        } else {
+                            this.plugin.settings.dateFormat = value;
+                        }
                         await this.plugin.saveSettings();
                         // 更新当前时间戳格式的样例
                         currentFormatExampleSpan.innerText =
-                            moment().format(value);
+                            moment().format(this.plugin.settings.dateFormat);
                     })
             );
     }
